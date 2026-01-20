@@ -2,18 +2,20 @@
 
 Catch all mail and display it in roundcube interface.
 
+![picture 2](images/1b0084636c5739b018bc914ad751bece14bb8e9cb043cc05e625515bcfa658aa.png)  
+
 # Usage
 
 ## Start Mailtrap
 
-    $ docker run -d --name=mailtrap -p 80:80 eaudeweb/mailtrap
+    $ docker run -d --name=mailtrap -p 80:80 florentgn/mailtrap:latest
 
 ## Send email
 
     $ docker run -it --link mailtrap alpine:3.6 sh
 
       $ telnet mailtrap 25
-      ehlo example.com
+      helo example.com
       mail from: me@example.com
       rcpt to: you@example.com
       data
@@ -50,6 +52,6 @@ and recreate the container.
 ## Testing the image locally
 
 ```
-sudo docker build -t eaudeweb/mailtrap:test .
+sudo docker build -t florentgn/mailtrap:test .
 sudo docker-compose up
 ```

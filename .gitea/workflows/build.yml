@@ -1,0 +1,90 @@
+name: Build and Push Docker Image to Gitea Container Registry
+run-name: Build triggered by ${{ gitea.actor }} on ${{ gitea.ref_name }}
+
+on:
+  push:
+    branches:
+      - master
+      - feat/*
+      - fix/*
+      - chore/*
+    tags:
+      - '*'
+
+env:
+  GITEA_IMAGE: ${{ vars.REGISTRY_DOMAIN }}/florentgn/edw.docker.mailtrap
+  GHCR_IMAGE: ghcr.io/florentgn/edw.docker.mailtrap
+  DOCKERHUB_IMAGE: florentgn/mailtrap
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -------------------
+      # Login registries
+      # -------------------
+
+      - name: Login to Gitea Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY_DOMAIN }}
+          username: ${{ gitea.actor }}
+          password: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # -------------------
+      # Build tools
+      # -------------------
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      # -------------------
+      # Tag logic
+      # -------------------
+
+      - name: Determine image tag
+        run: |
+          echo "GITEA_REF=${{ gitea.ref }}"  # debug
+          if [[ "${{ gitea.ref }}" == refs/tags/* ]]; then
+            IMAGE_TAG=${{ gitea.ref_name }}
+          elif [[ "${{ gitea.ref }}" == refs/heads/master ]]; then
+            IMAGE_TAG=latest
+          else
+            IMAGE_TAG=nightly
+          fi
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITEA_ENV
+          echo "Selected tag: $IMAGE_TAG"
+
+      # -------------------
+      # Build & Push (1 build, 3 registries)
+      # -------------------
+      
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm64/v8
+          tags: |
+            ${{ env.GITEA_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.GHCR_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.DOCKERHUB_IMAGE }}:${{ env.IMAGE_TAG }}

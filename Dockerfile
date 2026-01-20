@@ -1,10 +1,11 @@
 FROM debian:11-slim
 
 LABEL maintainer.original="David Batranu <david.batranu@eaudeweb.ro>"
-LABEL maintainer.current="ipunkt Business Solutions <info@ipunkt.biz>"
+LABEL maintainer.old="ipunkt Business Solutions <info@ipunkt.biz>"
+LABEL maintainer.current="FlorentGN <gaudin.florent@yahoo.fr>"
 
-ENV ROUNDCUBE_VERSION="1.3.1"
-ENV DEBIAN_FRONTEND=noninteractive
+ENV ROUNDCUBE_VERSION="1.5.2"
+ENV DEBIAN_FRONTEND noninteractive
 
 ENV MT_USER=mailtrap
 ENV MT_PASSWD=mailtrap
@@ -19,6 +20,7 @@ RUN apt-get update && apt-get install -q -y \
     php-mbstring \
     php-sqlite3 \
     php-pear \
+    php-intl \
     rsyslog \
     wget \
     && \
